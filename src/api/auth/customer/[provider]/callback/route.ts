@@ -1,6 +1,6 @@
 import { MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
 import { Modules, ContainerRegistrationKeys } from "@medusajs/framework/utils"
-import jwt from "jsonwebtoken"
+import * as jwt from "jsonwebtoken"
 
 export async function GET(
   req: MedusaRequest,
@@ -8,7 +8,7 @@ export async function GET(
 ) {
   const provider = req.params.provider;
   const authService = req.scope.resolve(Modules.AUTH);
-  const config = req.scope.resolve(ContainerRegistrationKeys.CONFIG_MODULE);
+  const config = req.scope.resolve(ContainerRegistrationKeys.CONFIG_MODULE) as any;
   
   try {
     // 1. Validate the OAuth callback using Medusa's auth module
@@ -30,7 +30,7 @@ export async function GET(
     }
 
     // 2. Generate a token for the customer using jsonwebtoken directly
-    const { http } = config.projectConfig;
+    const http = config.projectConfig?.http || {};
     
     // Construct the payload exactly as Medusa expects it
     const providerIdentity = authIdentity.provider_identities?.find(
@@ -71,8 +71,9 @@ export async function GET(
       user_metadata: providerIdentity?.user_metadata || (authIdentity as any).user_metadata || {},
     };
 
-    const token = jwt.sign(payload, http.jwtSecret, { 
-      expiresIn: http.jwtExpiresIn || "1d" 
+    const jwtSecret: string = http.jwtSecret || "supersecret";
+    const token = jwt.sign(payload, jwtSecret, { 
+      expiresIn: "1d" 
     });
 
     // 3. Redirect back to the frontend AuthCallback page with the token
@@ -84,4 +85,3 @@ export async function GET(
     return res.redirect(`http://localhost:5173/auth?error=${errMessage}`);
   }
 }
-

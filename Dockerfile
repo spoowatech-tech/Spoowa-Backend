@@ -2,12 +2,15 @@ FROM node:20
 
 WORKDIR /app
 
-COPY package*.json ./
+COPY package.json .npmrc ./
 
-RUN npm install
+RUN npm install -g pnpm
+RUN pnpm install
 
 COPY . .
 
 EXPOSE 9000
 
-CMD ["npm", "run", "dev"]
+RUN chmod +x start.sh
+
+CMD ["./start.sh"]
